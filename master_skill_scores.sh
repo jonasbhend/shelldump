@@ -127,6 +127,8 @@ case $index in
     dtr ) basevar=dtr ;; 
     pr|logpr|WDF ) basevar=pr ;; 
     snowfall|snowdays ) basevar=tas-pr ;;
+    ept ) basevar=ept ;;
+    wb ) basevar=wb ;;
     * )  echo "Index not implemented yet"
         exit 1;;
 esac
