@@ -12,7 +12,12 @@ outfile=$3
 
 TMPDIR=$SCRATCH/evapotranspiration_$$
 
-echo $infile1 $infile2 $outfile $TMPDIR
+if [[ $verbos == 1 ]] ; then
+    echo $infile1 
+    echo $infile2 
+    echo $outfile 
+    echo $TMPDIR
+fi
 
 ## change to temporary directory
 pdir=$( pwd )
@@ -27,12 +32,11 @@ args <- commandArgs(TRUE)
 infiles <- args[1:2]
 outfile <- args[3]
 
-
 input <- lapply(infiles, function(x){
   nc <- nc_open(x)
   on.exit(nc_close(nc))
   ncvars <- names(nc[['var']])
-  tasname <- ncvars[grep("tas", ncvars)]
+  tasname <- ncvars[grep("tasmax|tasmin|mn2t24|mx2t24", ncvars)]
   if (length(tasname) > 1) stop()
   out <- ncvar_get(nc, tasname)
   attr(out, "time") <- nc_time(nc)
