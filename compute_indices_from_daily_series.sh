@@ -7,9 +7,9 @@
 # Maintainer: 
 # Created: Tue Sep 23 09:35:13 2014 (+0200)
 # Version: 
-# Last-Updated: Tue Jan  5 14:58:23 2016 (+0100)
+# Last-Updated: Fri Jan 15 15:21:47 2016 (+0100)
 #           By: Jonas Bhend
-#     Update #: 190
+#     Update #: 194
 # URL: 
 # Keywords: 
 # Compatibility: 
@@ -94,11 +94,13 @@ if [[ $varname == "pr" ]] ; then
         tmpfile=$infile
     fi
 else  
-    if [[ $unit != "K"  && $offset == "true" ]] ; then
-        cdo -s shifttime,-12hours -addc,273.15 $infile $tmpfile
-    elif [[ $unit == "K" && $offset == "true" ]] ; then
-        cdo -s shifttime,-12hours $infile $tmpfile
-    elif [[ $unit != "K" && $offset != "true" ]] ; then
+    if [[ $offset == "true" ]] ; then
+        if [[ $varname =~ "tas" && $unit != "K" ]] ; then
+            cdo -s shifttime,-12hours -addc,273.15 $infile $tmpfile
+        else
+            cdo -s shifttime,-12hours $infile $tmpfile
+        fi
+    elif [[ $unit != "K" && $offset != "true" && $varname =~ "tas" ]] ; then
         cdo -s addc,273.15 $infile $tmpfile
     else
         tmpfile=$infile 
