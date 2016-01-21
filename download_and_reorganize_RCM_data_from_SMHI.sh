@@ -45,45 +45,48 @@ for varname in $varnames ; do
             ff2="_${model}_v1_day_${year}0501-${year}09??.nc"
 
             if [ -f ${ff1}r1i1p1${ff2} ] ; then
-                nfiles1=$( \ls ${ff1}r?i1p1${ff2} | wc -c )
-                nfiles2=$( \ls ${ff1}r*i1p1${ff2} | wc -c )
-                if [[ $nfiles1 == $nfiles2 ]] ; then
-                    files="${ff1}r?i1p1${ff2}"
-                else
-                    files="${ff1}r?i1p1${ff2} ${ff1}r??i1p1${ff2}"
-                fi
-                echo $files
-                startrip=$(echo $files | sed -e "s/_${model}_v1.*//g" -e 's/.*0501_//g')
-                endrip=$(echo $files | sed -e 's/.*0501_//g' -e 's/_.*//g')
-                
-                outfile=${ff1}${startrip}-${endrip}${ff2}
-                
-                ## collate to file
-                ncecat -h -O -u number $files $TMPDIR/$outfile
-                ncatted -h -a coordinates,${varname},d,, $TMPDIR/$outfile    
-                ncatted -h -a grid_mapping,${varname},d,, $TMPDIR/$outfile 
-                ncatted -h -a ensemble_members,global,o,c,"$startrip-$endrip" $TMPDIR/$outfile
-                ncks -3 -h -v $varname $TMPDIR/$outfile $TMPDIR/$outfile.tmp
-                ncpdq -h -O -a time,number,rlat,rlon $TMPDIR/$outfile.tmp $TMPDIR/$outfile
-                ncrename -h -d rlon,lon -v rlon,lon -d rlat,lat -v rlat,lat $TMPDIR/$outfile
-                ncatted -h -a long_name,lon,o,c,'longitude' $TMPDIR/$outfile
-                ncatted -h -a long_name,lat,o,c,'latitude' $TMPDIR/$outfile
-                ncatted -h -a standard_name,lon,o,c,'longitude' $TMPDIR/$outfile
-                ncatted -h -a standard_name,lat,o,c,'latitude' $TMPDIR/$outfile
-                ncatted -h -a units,lon,o,c,'degrees east' $TMPDIR/$outfile
-                ncatted -h -a units,lat,o,c,'degrees north' $TMPDIR/$outfile
-                ## ncatted -h -a long_name,number,o,c,"ensemble_member" $TMPDIR/$outfile
-                ## ncatted -h -a axis,number,o,c,"Z" $TMPDIR/$outfile.tmp
-
-                
                 ## set up output directory structure
                 outdir=/store/msclim/bhendj/EUPORIAS/$model/$grid/daily/$varname/none
                 if [[ ! -f $outdir ]] ; then
                     mkdir -p $outdir
                 fi
                 
-                mv $TMPDIR/$outfile $outdir/${year}0501_${varname}_${grid}_none.nc
-                rm $TMPDIR/*
+                if [ ! -f $outdir/${year}0501_${varname}_${grid}_none.nc ] ; then
+ 
+                    nfiles1=$( \ls ${ff1}r?i1p1${ff2} | wc -c )
+                    nfiles2=$( \ls ${ff1}r*i1p1${ff2} | wc -c )
+                    if [[ $nfiles1 == $nfiles2 ]] ; then
+                        files="${ff1}r?i1p1${ff2}"
+                    else
+                        files="${ff1}r?i1p1${ff2} ${ff1}r??i1p1${ff2}"
+                    fi
+                    echo $files
+                    startrip=$(echo $files | sed -e "s/_${model}_v1.*//g" -e 's/.*0501_//g')
+                    endrip=$(echo $files | sed -e 's/.*0501_//g' -e 's/_.*//g')
+                    
+                    outfile=${ff1}${startrip}-${endrip}${ff2}
+                    
+                ## collate to file
+                    ncecat -h -O -u number $files $TMPDIR/$outfile
+                    ncatted -h -a coordinates,${varname},d,, $TMPDIR/$outfile    
+                    ncatted -h -a grid_mapping,${varname},d,, $TMPDIR/$outfile 
+                    ncatted -h -a ensemble_members,global,o,c,"$startrip-$endrip" $TMPDIR/$outfile
+                    ncks -3 -h -v $varname $TMPDIR/$outfile $TMPDIR/$outfile.tmp
+                    ncpdq -h -O -a time,number,rlat,rlon $TMPDIR/$outfile.tmp $TMPDIR/$outfile
+                    ncrename -h -d rlon,lon -v rlon,lon -d rlat,lat -v rlat,lat $TMPDIR/$outfile
+                    ncatted -h -a long_name,lon,o,c,'longitude' $TMPDIR/$outfile
+                    ncatted -h -a long_name,lat,o,c,'latitude' $TMPDIR/$outfile
+                    ncatted -h -a standard_name,lon,o,c,'longitude' $TMPDIR/$outfile
+                    ncatted -h -a standard_name,lat,o,c,'latitude' $TMPDIR/$outfile
+                    ncatted -h -a units,lon,o,c,'degrees east' $TMPDIR/$outfile
+                    ncatted -h -a units,lat,o,c,'degrees north' $TMPDIR/$outfile
+                ## ncatted -h -a long_name,number,o,c,"ensemble_member" $TMPDIR/$outfile
+                ## ncatted -h -a axis,number,o,c,"Z" $TMPDIR/$outfile.tmp
+                    
+                
+                    mv $TMPDIR/$outfile $outdir/${year}0501_${varname}_${grid}_none.nc
+                    rm -f $TMPDIR/*
+                fi
                 
             fi
         done ## end of loop on years
