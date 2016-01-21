@@ -27,7 +27,7 @@ comparedate () {
     parenttree=$2
     
     if \ls $childtree &> /dev/null && \ls $parenttree &> /dev/null  ; then
-        childtimes=$( stat -c "%Z" $childtree )
+        childtimes=$( stat -c "%Y" $childtree )
         ## echo $childtimes
         childtime=$( echo $childtimes | head -1 | awk '{print $1}')
         for ct in $childtimes ; do
@@ -38,7 +38,7 @@ comparedate () {
         ## echo "Max Childtime: $childtime"
     
 
-        parenttimes=$( stat -c "%Z" $parenttree )
+        parenttimes=$( stat -c "%Y" $parenttree )
         ## echo $parenttimes
         parenttime=$( echo $parenttimes | head -1 | awk '{print $1}')
         for pt in $parenttimes ; do
@@ -254,7 +254,7 @@ fi
 if [[ $compute_skill == 1 ]] ;then
 
     ## check if indices need to be recomputed
-    if [[ $nindex  == 0 || $( comparedate "$indexfiles" "$biasfiles" ) == 1 || $( comparedate "$indexfiles" "$origfiles" ) == 1 ]] ; then
+    if [[ $nindex  == 0 || $( comparedate "$indexfiles" "$biasfiles" ) == 1 || $( comparedate "$indexfiles" "$origfiles" ) == 1 || ( $( comparedate "$indexfiles" "$obsorig" ) == 1  && ! $method =~ "none" ) ]] ; then
         compute_fcindex=1
     fi
 
@@ -266,7 +266,8 @@ fi
 
 ## check dependencies for indices
 if [[ $compute_fcindex == 1  && ! $method =~ "none" ]] ; then
-    if [[ $nbias == 0 || ( $force == 1 && $stop == "bias" ) || $( comparedate "$biasfiles" "$origfiles" ) == 1 ]] ; then
+    
+    if [[ $nbias == 0 || ( $force == 1 && $stop == "bias" ) || $( comparedate "$biasfiles" "$obsorig" ) == 1 ]] ; then
         compute_debias=1
     fi
 fi
