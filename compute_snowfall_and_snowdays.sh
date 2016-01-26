@@ -4,11 +4,11 @@
 ## (bias corrected) forecast data of mean temperature and rainfall
 ## and from the corresponding verifying observations
 
-grid=eobs0.44
+grid=global2
 fpath=/store/msclim/bhendj/EUPORIAS/ecmwf-system4/$grid
 
 
-for method in fastqqmap_1981-2010_E-OBS ; do
+for method in fastqqmap_1981-2010_ERA-INT ; do
 
 ## compute snowdays
 outdir=$fpath/monthly/snowdays/$method
