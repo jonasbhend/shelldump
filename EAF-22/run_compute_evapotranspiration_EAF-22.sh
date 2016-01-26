@@ -3,6 +3,7 @@
 ## compute the evapotranspiration from (bias corrected) tasmin and tasmax
 
 grid=EAF-22
+methods="none fastqqmap_1991-2012_WFDEI fastqqmap_debias_1991-2012_WFDEI"
 
 ## observations
 obs=WFDEI
@@ -19,7 +20,7 @@ if [[ ! -f $eptfile ]] ; then
 fi
 
 ## model runs
-for method in none fastqqmap_1991-2012_WFDEI ; do
+for method in $methods ; do
     for model in ecmwf-system4 SMHI-EC-EARTH SMHI-RCA4 UCAN-WRF341G UL-IDL-WRF360D DWD-CCLM4-8-21 ; do
     # for model in ecmwf-system4 ; do
         echo $model $method
@@ -57,7 +58,7 @@ if [[ -f $prfile && -f $eptfile && ! -f $wbfile ]] ; then
 fi
 
 ## model runs
-for method in fastqqmap_1991-2012_WFDEI none ; do
+for method in $methods ; do
     for model in SMHI-EC-EARTH SMHI-RCA4 UCAN-WRF341G UL-IDL-WRF360D DWD-CCLM4-8-21 ecmwf-system4 ; do
     # for model in ecmwf-system4 ; do
         echo $model $method

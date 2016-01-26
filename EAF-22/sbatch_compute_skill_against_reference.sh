@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for method in fastqqmap_????-????_WFDEI none ; do
+for method in fastqqmap_debias_????-????_WFDEI fastqqmap_????-????_WFDEI none ; do
     for model in DWD-CCLM4-8-21 UCAN-WRF341G UL-IDL-WRF360D SMHI-RCA4 ecmwf-system4 ; do
         for varname in ept wb tasmax tasmin pr ; do
             outfile=/store/msclim/bhendj/EUPORIAS/skill_against_reference/EAF-22/seasonal/$varname/${varname}_${method}_${model}-ref-SMHI-EC-EARTH_vs_WFDEI_1991-2012_initmon05.nc
