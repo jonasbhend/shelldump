@@ -7,9 +7,9 @@
 # Maintainer: 
 # Created: Tue Sep 23 09:35:13 2014 (+0200)
 # Version: 
-# Last-Updated: Fri Jan 15 15:21:47 2016 (+0100)
+# Last-Updated: Fri May 13 16:08:43 2016 (+0200)
 #           By: Jonas Bhend
-#     Update #: 194
+#     Update #: 205
 # URL: 
 # Keywords: 
 # Compatibility: 
@@ -159,6 +159,47 @@ case $index in
              pctlfile=$TMPDIR/$(basename $pctlfile)
         fi
        ;;
+    *pdd*|*ndd*) 
+        pctl=$(echo $index | sed -e 's/.*dd//g' -e 's/.*cc//g' )
+        grid=$(echo $infile | sed -e 's_/daily.*__g' -e 's_.*/__g' )
+        model=$(echo $infile | sed -e "s_/$grid.*__g" -e "s_.*/__g")
+        if [[ "ERA-INT WFDEI E-OBS" =~ $model ]] ; then
+            pctlfile=$(\ls /store/msclim/bhendj/EUPORIAS/$model/$grid/fx/$varname/pctl${pctl}_*.nc)
+        else 
+            itmp=$(echo $infile | sed -e "s/01_$varname.*//g")
+            init=${itmp:(-2)}
+            pctlfile=$(\ls /store/msclim/bhendj/EUPORIAS/$model/$grid/fx/$varname/pctl${pctl}_*initmon$init.nc)
+        fi
+        echo $pctlfile
+        if [[ ! -f $pctlfile ]] ; then
+            exit 1
+        fi
+        ## check on number of ensemble members
+        #1. get number of dimensions
+        vn=$(cdo -s showvar $tmpfile | sed 's/ //g')
+        ndims=$(ncdump -c $tmpfile | grep " $vn" | grep -E "(epsd|number)" | wc -l)
+        ## change the dimensionality of pctlfile
+        if [[ $ndims == 1 ]] ; then
+            enspctlfile=${pctlfile/pctl/enspctl}
+            if [[ ! -f $enspctlfile ]] ; then
+                cdo -s setgrid,$infile $pctlfile $TMPDIR/$(basename $pctlfile)
+                pctlfile=$TMPDIR/$(basename $pctlfile)
+                let i=0
+                while [[ $i -lt 51 ]] ; do
+                    let i=i+1
+                    ln -s $pctlfile $pctlfile.$i
+                done
+                ncecat -h -O $pctlfile.* $pctlfile.tmp
+                ncpdq -O -a time,record $pctlfile.tmp $enspctlfile
+                rm $pctlfile.*
+            fi
+            pctlfile=$enspctlfile
+        else 
+            ## regrid the pctlfile
+             cdo -s setgrid,$infile $pctlfile $TMPDIR/$(basename $pctlfile)
+             pctlfile=$TMPDIR/$(basename $pctlfile)
+        fi
+       ;;
 esac
 
 
@@ -184,13 +225,13 @@ fi
 ## compute index on monthly files
 monfiles=`\ls $TMPDIR/${ifilestem}??*.nc`
 for f in $monfiles ; do
-    if [[ $index =~ "PDD" ]] ; then
+    if [[ $index =~ "PDD" || $index =~ "pdd" ]] ; then
         cdo -b 32 -L -s timsum -setrtoc,-1e20,0,0 -ydaysub $f $pctlfile ${f/$ifilestem/$index}
-    elif [[ $index =~ "NDD" ]] ; then
+    elif [[ $index =~ "NDD" || $index =~ "ndd"  ]] ; then
         cdo -b 32 -L -s timsum -mulc,-1 -setrtoc,0,1e20,0 -ydaysub $f $pctlfile ${f/$ifilestem/$index}
-    elif [[ $index =~ "PCC" ]] ; then
+    elif [[ $index =~ "PCC" || $index =~ "pcc" ]] ; then
         cdo -b 32 -L -s timsum -gec,0 -ydaysub $f $pctlfile ${f/$ifilestem/$index}
-    elif [[ $index =~ "NCC" ]] ; then
+    elif [[ $index =~ "NCC" || $index =~ "ncc" ]] ; then
         cdo -b 32 -L -s timsum -lec,0 -ydaysub $f $pctlfile ${f/$ifilestem/$index}
     else
         ntime=$( cdo -s showdate $f | tail -1 | wc -w )
@@ -240,7 +281,7 @@ elif [[ $index == "SD" ]] ; then
 elif [[ $index == "HD" ]] ; then
     ncrename -h -v summer_days_index_per_time_period,HD $outfile
     ncatted -h -a long_name,HD,o,c,'Fraction of heat days (Tmax > 30 deg. C)' $outfile
-elif [[ $index =~ "PDD" || $index =~ "NDD" || $index =~ "NCC" || $index =~ "PCC" ]] ; then
+elif [[ $index =~ "PDD" || $index =~ "NDD" || $index =~ "NCC" || $index =~ "PCC" || $index =~ "pdd" || $index =~ "ndd" || $index =~ "pcc" || $index =~ "ncc"]] ; then
     vname=`cdo -s showvar $outfile | sed 's/ //g'`
     pctl=$(echo $index | sed -e 's/.*DD//g' -e 's/.*CC//g')
     if [[ $index =~ "seas" ]] ; then
@@ -256,7 +297,16 @@ elif [[ $index =~ "PDD" || $index =~ "NDD" || $index =~ "NCC" || $index =~ "PCC"
     elif [[ $index =~ "NCC" ]] ; then
         ncatted -h -a long_name,$index,o,c,"Average number of departures below threshold (< ${pctl}th percentile of ERA-INT)" $outfile
     fi
-    if [[ $index =~ "PDD" || $index == "NDD" ]] ; then
+    if [[ $index =~ "pdd" ]] ; then
+        ncatted -h -a long_name,$index,o,c,"Average degree days per day (> ${pctl}th percentile of $model)" $outfile
+    elif [[ $index =~ "ndd" ]] ; then
+        ncatted -h -a long_name,$index,o,c,"Average degree days per day (< ${pctl}th percentile of $model)" $outfile
+    elif [[ $index =~ "pcc" ]] ; then
+        ncatted -h -a long_name,$index,o,c,"Average number of threshold exceedances (< ${pctl}th percentile of $model)" $outfile
+    elif [[ $index =~ "ncc" ]] ; then
+        ncatted -h -a long_name,$index,o,c,"Average number of departures below threshold (< ${pctl}th percentile of $model)" $outfile
+    fi
+    if [[ $index =~ "PDD" || $index =~ "NDD" || $index =~ "pdd" || $index =~ "ndd" ]] ; then
         ncatted -h -a units,$index,o,c,"deg. C" $outfile
     else
         ncatted -h -a units,$index,o,c,"1" $outfile
