@@ -3,7 +3,8 @@
 ## compute the evapotranspiration from (bias corrected) tasmin and tasmax
 
 grid=EAF-22
-methods="none fastqqmap_1991-2012_WFDEI fastqqmap_debias_1991-2012_WFDEI"
+methods="none fastqqmap_1991-2012_WFDEI"
+methods='none'
 
 ## observations
 obs=WFDEI
@@ -21,7 +22,7 @@ fi
 
 ## model runs
 for method in $methods ; do
-    for model in ecmwf-system4 SMHI-EC-EARTH SMHI-RCA4 UCAN-WRF341G UL-IDL-WRF360D DWD-CCLM4-8-21 ; do
+    for model in SMHI-EC-EARTH SMHI-RCA4 UCAN-WRF341G UL-IDL-WRF360D DWD-CCLM4-8-21 ENEA-RegCM4-3 ecmwf-system4 ; do
     # for model in ecmwf-system4 ; do
         echo $model $method
         modpath=/store/msclim/bhendj/EUPORIAS/$model/$grid/daily
@@ -59,7 +60,7 @@ fi
 
 ## model runs
 for method in $methods ; do
-    for model in SMHI-EC-EARTH SMHI-RCA4 UCAN-WRF341G UL-IDL-WRF360D DWD-CCLM4-8-21 ecmwf-system4 ; do
+    for model in SMHI-EC-EARTH SMHI-RCA4 UCAN-WRF341G UL-IDL-WRF360D DWD-CCLM4-8-21 ENEA-RegCM4-3 ecmwf-system4 ; do
     # for model in ecmwf-system4 ; do
         echo $model $method
         modpath=/store/msclim/bhendj/EUPORIAS/$model/$grid/daily
@@ -81,3 +82,5 @@ for method in $methods ; do
         done
     done
 done
+
+exit
