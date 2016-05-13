@@ -13,14 +13,17 @@ mkdir -p $TMPDIR
 for  granul in weekly ; do
     for varname in tas  ; do
         files=$(\ls $dpath/$granul/$varname/none/*.nc )
-        for method in unbias ; do
+        for method in unbias-crossval1 ; do
             for file in $files ; do
-                
-                batchfile=$TMPDIR/${varname}_${method}_${RANDOM}.batch
-                echo $varname $method $file $batchfile
-                
+
+                outfile=$( echo $file | sed -e "s/none/${method}_E-OBS/g" -e "s/.nc/_${method}_E-OBS.nc/g" )
+
+                if [[ ! -f $outfile ]] ; then
+                    batchfile=$TMPDIR/${varname}_${method}_${RANDOM}.batch
+                    echo $varname $method $file $batchfile
+                    
             ## write the batch file
-                cat > $batchfile <<EOF
+                    cat > $batchfile <<EOF
 #!/usr/local/bin/bash
 
 #SBATCH --mail-user=jonas.bhend@meteoswiss.ch
@@ -39,9 +42,9 @@ srun Rscript /users/bhendj/R/sbatch_bias_correct_mofc.R $file $method
 
 EOF
                 
-                sbatch $batchfile
-                rm $batchfile
-                
+                    sbatch $batchfile
+                    rm $batchfile
+                fi
             done
         done
     done

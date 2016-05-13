@@ -12,7 +12,7 @@ mkdir -p $TMPDIR
 ## loop through variable name and debiasing options
 for granul in weekly ; do
     for varname in tas  ; do
-        for method in none smooth-crossval1 ; do
+        for method in none unbias-crossval1 ; do
             files=$(\ls $dpath/$granul/$varname/${method}*/*.nc )
             for file in $files ; do
                 
@@ -21,7 +21,7 @@ for granul in weekly ; do
                 
                 if [[ ! -f $outdir/$outfile ]] ; then
                     batchfile=$TMPDIR/scores_${varname}_${method}_${RANDOM}.batch
-                ## echo $varname $method $file $batchfile
+                    echo $varname $method $file $batchfile
                     
                 ## write the batch file
                     cat > $batchfile <<EOF
@@ -30,11 +30,11 @@ for granul in weekly ; do
 #SBATCH --mail-user=jonas.bhend@meteoswiss.ch
 #SBATCH --job-name=mofc_scores
 #SBATCH --mail-type=FAIL
-#SBATCH --time=02:00:00
+#SBATCH --time=01:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=18GB
+#SBATCH --mem=8GB
 #SBATCH --partition=postproc
 #SBATCH --output=$HOME/logs/mofc_scores_${varname}_${method}_%j.log
 
