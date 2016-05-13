@@ -4,8 +4,8 @@
 skillpath=/store/msclim/bhendj/EUPORIAS/skill_scores
 cd $skillpath
 grids=$( \ls -d * )
-for grid in $grids ; do
-## for grid in eobs0.44 global2 ; do
+## for grid in $grids ; do
+for grid in eobs0.44 global2 ; do
     cd $skillpath/$grid/seasonal
     varnames=$( \ls -d *)
     for varname in $varnames ; do
@@ -21,7 +21,8 @@ for grid in $grids ; do
             model=$( echo $file | sed -e "s/_vs.*//g" -e "s/.*_//g" )
             obs=$( echo $file | sed -e "s/.*_vs_//g" -e "s/_.*//g" )
             if [[ ! ( $method =~ "CCR" || $method =~ "detrend" ) ]] ; then
-                master_skill_scores.sh -nv  $model $obs $varname $grid $method $init
+                cd $HOME/logs
+                master_skill_scores.sh -v  $model $obs $varname $grid $method $init
             fi
 
         done
