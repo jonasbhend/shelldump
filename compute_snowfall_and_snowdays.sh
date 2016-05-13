@@ -5,10 +5,11 @@
 ## and from the corresponding verifying observations
 
 grid=global2
+methods="none fastqqmap_1981-2012_ERA-INT fastqqmap-crossval1_1981-2012_ERA-INT"
 fpath=/store/msclim/bhendj/EUPORIAS/ecmwf-system4/$grid
 
 
-for method in fastqqmap_1981-2010_ERA-INT ; do
+for method in $methods ; do
 
 ## compute snowdays
 outdir=$fpath/monthly/snowdays/$method
@@ -110,5 +111,5 @@ ncatted -h -a units,$varname,o,c,'cm/day' $outfile
 ncatted -h -a long_name,$varname,o,c,'Average snowfall per day' $outfile
 
  
-
+exit
 
