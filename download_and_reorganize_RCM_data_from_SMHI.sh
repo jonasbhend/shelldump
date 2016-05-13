@@ -7,8 +7,8 @@ cd $tmppath
 ## login: sftp sm_euporias_sftp@bi.nsc.liu.se
 ## cd euporias/WP21
 ## lcd RCM/EAF-22/day
-## mget -a RCM/*/EAF-22/netcdf/*/*/day/tasm*.nc
-## mget -a RCM/*/EAF-22/netcdf/*/*/day/pr_*.nc
+## mget RCM/*/EAF-22/netcdf/*/*/day/tasm*.nc
+## mget RCM/*/EAF-22/netcdf/*/*/day/pr_*.nc
 ## # also get the fixed info
 ## lcd ../fx
 ## mget RCM/*/EAF-22/fx/*.nc
@@ -26,7 +26,8 @@ mkdir $TMPDIR
 
 grid=EAF-22
 varnames="pr tasmax tasmin"
-models="UCAN-WRF341G SMHI-RCA4 DWD-CCLM4-8-21 UL-IDL-WRF360D SMHI-EC-EARTH"
+models="UCAN-WRF341G SMHI-RCA4 DWD-CCLM4-8-21 UL-IDL-WRF360D SMHI-EC-EARTH ENEA-RegCM4-3"
+models="ENEA-RegCM4-3"
 for varname in $varnames ; do
     echo $varname
     for model in $models ; do
@@ -42,7 +43,7 @@ for varname in $varnames ; do
             let year=year+1
             echo $year
             ff1="${varname}_${grid}_SMHI-EC-EARTH_seasonal${year}0501_"
-            ff2="_${model}_v1_day_${year}0501-${year}09??.nc"
+            ff2="_${model}_v1_day_${year}050[1-2]-${year}09??.nc"
 
             if [ -f ${ff1}r1i1p1${ff2} ] ; then
                 ## set up output directory structure
@@ -82,6 +83,11 @@ for varname in $varnames ; do
                     ncatted -h -a units,lat,o,c,'degrees north' $TMPDIR/$outfile
                 ## ncatted -h -a long_name,number,o,c,"ensemble_member" $TMPDIR/$outfile
                 ## ncatted -h -a axis,number,o,c,"Z" $TMPDIR/$outfile.tmp
+
+                    if [[ $model == "ENEA-RegCM4-3" ]] ; then
+                        cdo -r settaxis,${year}-05-02,12:00,1day $TMPDIR/$outfile $TMPDIR/$outfile.tmp
+                        mv $TMPDIR/$outfile.tmp $TMPDIR/$outfile
+                    fi
                     
                 
                     mv $TMPDIR/$outfile $outdir/${year}0501_${varname}_${grid}_none.nc
