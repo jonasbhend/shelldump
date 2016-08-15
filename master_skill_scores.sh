@@ -16,7 +16,13 @@ function usage {
     echo "       grid          grid specification of forecasts and obs (e.g. eobs0.44"
     echo "       bias          bias correction method (e.g. qqmap, smooth-crossval1)"
     echo "       initmon       month of forecast initialisation (1-12)"
-    echo "       ref.obs       reference observation for debiasing (e.g. E-OBS, ERA-INT, if not set, is the same as obs.)"
+    echo "       years         range of years to be used for bias correction (e.g. 1981-2010)"
+    echo "       scores        what scoreset to compute, one of small, standard, full"
+    echo "       indbias       method to be used for additional calibration of aggregated indices"
+    echo "                     (same as bias, or comma-separated list of methods without spaces,"
+    echo "                     defaults to none,ccr for no calibration and ccr on aggregated index)"
+    echo "       ref.obs       reference observation for debiasing (e.g. E-OBS, ERA-INT,"
+    echo "                     if not set, is the same as obs.)"
     echo
     
     exit 1
@@ -116,11 +122,15 @@ else
     wscores='standard'
 fi
 if [ $# -gt 8 ] ; then
-    robs=$9
+    indbias=$9
+else
+    indbias="none,ccr"
+fi
+if [ $# -gt 9 ] ; then
+    robs=$10
 else 
     robs=$obs
 fi
-
 
 if [[ $bias =~ "none" ]] ; then
     method=$bias
@@ -398,8 +408,9 @@ fi
 
     ## for seasonal in TRUE FALSE ; do
     for seasonal in TRUE ; do
-        for ccr in FALSE TRUE ; do 
-        ## for ccr in FALSE ; do
+
+	for indmethod in $(echo $indbias | sed 's/,/ /g') ; do
+
             for detrend in FALSE ; do
             ## for detrend in FALSE TRUE ; do
                 
@@ -409,11 +420,10 @@ fi
                     seasstring=monthly
                 fi
                 
-                if [[ $ccr == "TRUE" ]] ; then
-                    ccrstring=CCR_
+                if [[ $indmethod == "none" ]] ; then
+                    indmethodstring=""
                 else
-
-                    ccrstring=""
+                    indmethodstring=$(echo $indmethod | tr '[:lower:]' '[:upper:]')"_"
                 fi
                 
                 if [[ $detrend == "TRUE" ]] ; then
@@ -422,14 +432,15 @@ fi
                     detrendstring=""
                 fi
                 
-                skillfile=$( \ls $spath/$seasstring/$index/${index}_${detrendstring}${ccrstring}${method}_${model}_vs_${obs}_${years}_initmon$init.nc 2> /dev/null )
+                skillfile=$( \ls $spath/$seasstring/$index/${index}_${detrendstring}${indmethodstring}${method}_${model}_vs_${obs}_${years}_initmon$init.nc 2> /dev/null )
                 if [[ $force == 1 || ! -f $skillfile || $( comparedate $skillfile $indexfiles ) == 1 || $( comparedate $skillfile $origfiles ) == 1|| $( comparedate $skillfile $obsfiles ) == 1 || $( comparedate $skillfile $obsorig ) == 1 ]] ; then
                     
                     skillbatch="sbatch --job-name=compute_skill -t 05:00:00 --mem=12GB --parsable \
                        -o compute_skill_${index}_initmon${init}_%j.log $dependstring \
-                       $STD_OPTIONS /users/bhendj/code/wrapper_jobscript.sbatch $skillcommand $seasonal $ccr $detrend"
+                       $STD_OPTIONS /users/bhendj/code/wrapper_jobscript.sbatch $skillcommand $seasonal $indmethod $detrend"
                     
                     if [[ $dry == 1 ]] ; then
+			echo "Skill scores with index calibration $indmethod:"
                         echo $skillbatch
                     else
                         
@@ -441,7 +452,7 @@ fi
                     fi  
                 fi
             done ## end of for on detrend
-        done ## end of for on ccr
+        done ## end of for on bias correction on aggregated index
     done ## end of for on seasonal
 ##fi ## end of if on compute_skill
 
@@ -465,9 +476,8 @@ if [[ $write_forecasts == 1 ]] ; then
 
     ## for seasonal in TRUE FALSE ; do
     for seasonal in TRUE ; do
-        ## for ccr in FALSE ; do
-        for ccr in FALSE TRUE ; do 
-            ## for detrend in TRUE ; do
+ 	for indmethod in $(echo $indbias | sed 's/,/ /g') ; do
+           ## for detrend in TRUE ; do
             for detrend in FALSE ; do
                 if [[ $seasonal == "TRUE" ]] ; then
                     seasstring=seasonal
@@ -475,10 +485,10 @@ if [[ $write_forecasts == 1 ]] ; then
                     seasstring=monthly
                 fi
                 
-                if [[ $ccr == "TRUE" ]] ; then
-                    ccrstring=CCR_
+                if [[ $indmethod == "none" ]] ; then
+                    indmethodstring=""
                 else
-                    ccrstring=""
+                    indmethodstring=$(echo $indmethod | tr '[:lower:]' '[:upper:]')"_"
                 fi
                 
                 if [[ $detrend == "TRUE" ]] ; then
@@ -487,13 +497,13 @@ if [[ $write_forecasts == 1 ]] ; then
                     detrendstring=""
                 fi
 
-                nfcst=$( \ls $fpath/$seasstring/$index/$method/${index}_${detrendstring}${ccrstring}${grid}_${obs}_${method}_initmon${init}/${index}_${detrendstring}${ccrstring}${grid}_${obs}_${method}_initmon${init}_????_???.Rdata 2> /dev/null | wc -l )
+                nfcst=$( \ls $fpath/$seasstring/$index/$method/${index}_${detrendstring}${indmethodstring}${grid}_${obs}_${method}_initmon${init}/${index}_${detrendstring}${indmethodstring}${grid}_${obs}_${method}_initmon${init}_????_???.Rdata 2> /dev/null | wc -l )
                 if [[ ( $force == 1 || $nfcst -lt 20 ) && $seasonal == "TRUE" && $detrend == "FALSE" ]] ; then
 
                     
                     fcstbatch="sbatch --job-name=write_forecasts -t 03:00:00 --mem=12GB --parsable \
                        -o write_forecasts_${index}_initmon${init}_%j.log $dependstring \
-                       $STD_OPTIONS /users/bhendj/code/wrapper_jobscript.sbatch $fcstcommand $seasonal $ccr $detrend"
+                       $STD_OPTIONS /users/bhendj/code/wrapper_jobscript.sbatch $fcstcommand $seasonal $indmethod $detrend"
                     
                     if [[ $dry == 1 ]] ; then
                         echo $fcstbatch
@@ -507,7 +517,7 @@ if [[ $write_forecasts == 1 ]] ; then
                     fi  
                 fi
             done ## end of for on detrend
-        done ## end of for on ccr
+        done ## end of for on bias correction on aggregated index
     done ## end of for on seasonal
 fi ## end of if on compute_skill
 
