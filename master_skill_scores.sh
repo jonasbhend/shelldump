@@ -106,13 +106,22 @@ else
     init=11
 fi
 if [ $# -gt 6 ] ; then
-    robs=$7
+    years=$7
+else
+    years="????-????"
+fi
+if [ $# -gt 7 ] ; then
+    wscores=$8
+else
+    wscores='standard'
+fi
+if [ $# -gt 8 ] ; then
+    robs=$9
 else 
     robs=$obs
 fi
 
 
-years="????-????"
 if [[ $bias =~ "none" ]] ; then
     method=$bias
 else
@@ -129,6 +138,8 @@ case $index in
     snowfall|snowdays ) basevar=tas-pr ;;
     ept ) basevar=ept ;;
     wb ) basevar=wb ;;
+    *ddx*|*ccx* ) basevar=tasmax ;;
+    *ddn*|*ccn* ) basevar=tasmin ;;
     * )  echo "Index not implemented yet"
         exit 1;;
 esac
@@ -370,7 +381,7 @@ fi
 
 ## compute skill scores
 ## if [[ $compute_skill == 1 ]] ; then
-    skillcommand="srun Rscript /users/bhendj/R/sbatch_compute_skill.R $model $obs $index $grid $method $init"
+    skillcommand="srun Rscript /users/bhendj/R/sbatch_compute_skill.R $model $obs $index $grid $method $init $wscores"
     fcstcommand="srun Rscript /users/bhendj/R/sbatch_write_forecasts_to_Rdata.R $model $obs $index $grid $method $init"
 
     if [[ $jobdepend != "" || $ojobdepend != "" ]] ; then
@@ -388,7 +399,9 @@ fi
     ## for seasonal in TRUE FALSE ; do
     for seasonal in TRUE ; do
         for ccr in FALSE TRUE ; do 
+        ## for ccr in FALSE ; do
             for detrend in FALSE ; do
+            ## for detrend in FALSE TRUE ; do
                 
                 if [[ $seasonal == "TRUE" ]] ; then
                     seasstring=seasonal
@@ -452,7 +465,9 @@ if [[ $write_forecasts == 1 ]] ; then
 
     ## for seasonal in TRUE FALSE ; do
     for seasonal in TRUE ; do
+        ## for ccr in FALSE ; do
         for ccr in FALSE TRUE ; do 
+            ## for detrend in TRUE ; do
             for detrend in FALSE ; do
                 if [[ $seasonal == "TRUE" ]] ; then
                     seasstring=seasonal
