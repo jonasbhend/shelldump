@@ -7,9 +7,9 @@
 # Maintainer: 
 # Created: Tue Sep 23 09:35:13 2014 (+0200)
 # Version: 
-# Last-Updated: Fri May 13 16:08:43 2016 (+0200)
+# Last-Updated: Tue May 17 08:52:58 2016 (+0200)
 #           By: Jonas Bhend
-#     Update #: 205
+#     Update #: 219
 # URL: 
 # Keywords: 
 # Compatibility: 
@@ -122,6 +122,7 @@ case $index in
     SD) cdoarg="eca_su,25" ;;
     HD) cdoarg="eca_su,30" ;;
     *PDD*|*NDD*|*PCC*|*NCC*) 
+        echo "Compute DD/CC"
         pctl=$(echo $index | sed -e 's/.*DD//g' -e 's/.*CC//g' )
         grid=$(echo $infile | sed -e 's_/daily.*__g' -e 's_.*/__g' )
         if [[ $index =~ "seas" ]] ; then
@@ -159,8 +160,8 @@ case $index in
              pctlfile=$TMPDIR/$(basename $pctlfile)
         fi
        ;;
-    *pdd*|*ndd*) 
-        pctl=$(echo $index | sed -e 's/.*dd//g' -e 's/.*cc//g' )
+    *pdd*|*ndd*|*pcc*|*ncc*) 
+        pctl=$(echo $index | sed -e 's/.*dd.//g' -e 's/.*cc.//g' )
         grid=$(echo $infile | sed -e 's_/daily.*__g' -e 's_.*/__g' )
         model=$(echo $infile | sed -e "s_/$grid.*__g" -e "s_.*/__g")
         if [[ "ERA-INT WFDEI E-OBS" =~ $model ]] ; then
@@ -200,11 +201,15 @@ case $index in
              pctlfile=$TMPDIR/$(basename $pctlfile)
         fi
        ;;
+    *) echo "Index not implemented in compute_indices_..."
+        exit 
+        ;;
 esac
 
 
 ## find out whether the file contains more than one year
 years=`cdo -s showyear $tmpfile`
+echo $years
 years=( $years )
 nyears=${#years[@]}
 if [[ $nyears -gt 2 ]] ; then
@@ -281,7 +286,7 @@ elif [[ $index == "SD" ]] ; then
 elif [[ $index == "HD" ]] ; then
     ncrename -h -v summer_days_index_per_time_period,HD $outfile
     ncatted -h -a long_name,HD,o,c,'Fraction of heat days (Tmax > 30 deg. C)' $outfile
-elif [[ $index =~ "PDD" || $index =~ "NDD" || $index =~ "NCC" || $index =~ "PCC" || $index =~ "pdd" || $index =~ "ndd" || $index =~ "pcc" || $index =~ "ncc"]] ; then
+elif [[ $index =~ "PDD" || $index =~ "NDD" || $index =~ "NCC" || $index =~ "PCC" || $index =~ "pdd" || $index =~ "ndd" || $index =~ "pcc" || $index =~ "ncc" ]] ; then
     vname=`cdo -s showvar $outfile | sed 's/ //g'`
     pctl=$(echo $index | sed -e 's/.*DD//g' -e 's/.*CC//g')
     if [[ $index =~ "seas" ]] ; then
